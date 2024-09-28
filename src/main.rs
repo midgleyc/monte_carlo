@@ -3,10 +3,11 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand::Rng;
 use std::env;
+use std::iter::repeat;
 
-fn pick_monster(mut rng: &mut ThreadRng, monsters: &[i32], queue: &[i32]) -> i32 {
+fn pick_monster(mut rng: &mut ThreadRng, monsters: &[i32], queue: &[i32], ignore_queue: bool) -> i32 {
     let pick = monsters.choose(&mut rng).unwrap();
-    if *pick == 1 {
+    if ignore_queue && *pick == 1 {
         1
     } else if !queue.contains(pick) {
         *pick
@@ -15,7 +16,7 @@ fn pick_monster(mut rng: &mut ThreadRng, monsters: &[i32], queue: &[i32]) -> i32
         if r < 0.25 {
             *pick
         } else {
-            pick_monster(rng, monsters, queue)
+            pick_monster(rng, monsters, queue, ignore_queue)
         }
     }
 }
@@ -29,14 +30,15 @@ fn add_queue(queue: &mut Vec<i32>, pick: i32) {
 
 fn calc(n: i32) -> f32 {
     let mut queue: Vec<i32> = Vec::with_capacity(5);
-    // 5 encounter zone
-    // plus two copies, ignore queue
-    let monsters = vec![1, 1, 1, 2, 3, 4, 5];
+    let encounters_in_zone = 3;
+    let additional_copies = 3;
+    let ignore_queue = true;
+    let monsters: Vec<i32> = repeat(1).take(additional_copies).chain(1..={encounters_in_zone}).collect();
 
     let mut rng = thread_rng();
     let mut count = 0;
     for _ in 0..n {
-        let pick = pick_monster(&mut rng, &monsters, &queue);
+        let pick = pick_monster(&mut rng, &monsters, &queue, ignore_queue);
         if pick == 1 {
             count += 1;
         }
